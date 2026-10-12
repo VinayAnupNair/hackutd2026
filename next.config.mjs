@@ -1,5 +1,24 @@
 // next.config.mjs
+import { networkInterfaces } from "node:os";
+
 const isDev = process.env.NODE_ENV !== "production";
+
+/** Non-loopback IPv4 addresses, so LAN / VPN clients can load dev assets. */
+function lanHosts() {
+  const hosts = [];
+  try {
+    for (const list of Object.values(networkInterfaces() || {})) {
+      for (const net of list || []) {
+        if (net.family === "IPv4" && !net.internal && net.address) {
+          hosts.push(net.address);
+        }
+      }
+    }
+  } catch {
+    // restricted environments
+  }
+  return hosts;
+}
 
 function csp() {
   return [
@@ -25,6 +44,7 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: isDev ? ["127.0.0.1", ...lanHosts()] : [],
   async headers() {
     return [
       {
