@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { io, type Socket } from "socket.io-client";
-import {
-  isBlocking,
-  type AnimSpec,
-  type PlayerId,
-} from "@/lib/clash";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { isBlocking, type AnimSpec, type PlayerId } from "@/lib/clash";
 import type { RoomSnapshot } from "@/lib/clash-room";
 import { Arena } from "./Arena";
 import { HPBar } from "./HPBar";
@@ -14,35 +9,112 @@ import { PromptPanel } from "./PromptPanel";
 import { Storyboard } from "./Storyboard";
 
 type Props = {
+  /** If set, join this room instead of hosting */
+  joinCode?: string | null;
   onBack: () => void;
 };
 
-export function OnlineShell({ onBack }: Props) {
-  const [socket, setSocket] = useState<Socket | null>(null);
+function playerToken() {
+  const key = "clash-player-token";
+  let t = sessionStorage.getItem(key);
+  if (!t) {
+    t = `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+    sessionStorage.setItem(key, t);
+  }
+  return t;
+}
+
+async function roomApi(body: Record<string, unknown>) {
+  const res = await fetch("/api/room", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  return { ok: res.ok && data.ok !== false, status: res.status, data };
+}
+
+export function OnlineShell({ joinCode, onBack }: Props) {
+  const [token] = useState(() =>
+    typeof window !== "undefined" ? playerToken() : ""
+  );
   const [seat, setSeat] = useState<PlayerId | null>(null);
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
-  const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [lanHint, setLanHint] = useState("");
+  const [booting, setBooting] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [, setTick] = useState(0);
+  const codeRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const s = io({ path: "/socket.io", autoConnect: true });
-    setSocket(s);
-    s.on("room:state", (state: RoomSnapshot) => setRoom(state));
-    s.on("connect_error", () =>
-      setError("Could not connect — run `npm run dev` (socket server).")
-    );
+    let cancelled = false;
+
+    async function boot() {
+      setError(null);
+      const want = (joinCode || "").trim().toUpperCase();
+      try {
+        if (want) {
+          const { ok, data } = await roomApi({
+            action: "join",
+            code: want,
+            token,
+          });
+          if (cancelled) return;
+          if (!ok || !data.seat || !data.state) {
+            setError(data.error || "Failed to join room");
+            setBooting(false);
+            return;
+          }
+          codeRef.current = data.state.code;
+          setSeat(data.seat);
+          setRoom(data.state);
+        } else {
+          const { ok, data } = await roomApi({ action: "create", token });
+          if (cancelled) return;
+          if (!ok || !data.seat || !data.state) {
+            setError(data.error || "Failed to host room");
+            setBooting(false);
+            return;
+          }
+          codeRef.current = data.state.code;
+          setSeat(data.seat);
+          setRoom(data.state);
+          const url = new URL(window.location.href);
+          url.searchParams.set("room", data.state.code);
+          window.history.replaceState({}, "", url.toString());
+        }
+      } catch {
+        if (!cancelled) setError("Could not reach room server");
+      } finally {
+        if (!cancelled) setBooting(false);
+      }
+    }
+
+    if (token) boot();
     return () => {
-      s.removeAllListeners();
-      s.disconnect();
+      cancelled = true;
     };
-  }, []);
+  }, [joinCode, token]);
 
+  // Poll room state
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    setLanHint(window.location.host);
-  }, []);
+    if (!codeRef.current && !room?.code) return;
+    const code = codeRef.current || room?.code;
+    if (!code) return;
+
+    const id = window.setInterval(async () => {
+      try {
+        const res = await fetch(`/api/room?code=${encodeURIComponent(code)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.state) setRoom(data.state);
+      } catch {
+        // ignore transient poll errors
+      }
+    }, 700);
+
+    return () => window.clearInterval(id);
+  }, [room?.code, booting]);
 
   useEffect(() => {
     if (room?.phase !== "live") return;
@@ -50,57 +122,71 @@ export function OnlineShell({ onBack }: Props) {
     return () => window.clearInterval(id);
   }, [room?.phase]);
 
+  useEffect(() => {
+    return () => {
+      const code = codeRef.current;
+      if (!code || !token) return;
+      void roomApi({ action: "leave", code, token });
+    };
+  }, [token]);
+
   const myBudget = seat === 1 ? room?.budget1 ?? 0 : room?.budget2 ?? 0;
   const myRegen = seat === 1 ? room?.regen1 ?? 0 : room?.regen2 ?? 0;
 
-  function createRoom() {
+  const shareUrl =
+    typeof window !== "undefined" && room
+      ? `${window.location.origin}/?room=${room.code}`
+      : "";
+
+  async function copyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setError("Could not copy link");
+    }
+  }
+
+  async function startMatch() {
+    if (!room) return;
     setError(null);
-    socket?.emit("room:create", (res: { ok: boolean; seat?: PlayerId; state?: RoomSnapshot; error?: string }) => {
-      if (!res.ok || !res.seat || !res.state) {
-        setError(res.error || "Failed to create room");
-        return;
-      }
-      setSeat(res.seat);
-      setRoom(res.state);
+    const { ok, data } = await roomApi({
+      action: "start",
+      code: room.code,
+      token,
     });
+    if (!ok) setError(data.error || "Could not start");
+    else if (data.state) setRoom(data.state);
   }
 
-  function joinRoom() {
+  async function rematch() {
+    if (!room) return;
     setError(null);
-    socket?.emit(
-      "room:join",
-      { code: joinCode },
-      (res: { ok: boolean; seat?: PlayerId; state?: RoomSnapshot; error?: string }) => {
-        if (!res.ok || !res.seat || !res.state) {
-          setError(res.error || "Failed to join");
-          return;
-        }
-        setSeat(res.seat);
-        setRoom(res.state);
-      }
-    );
+    const { ok, data } = await roomApi({
+      action: "rematch",
+      code: room.code,
+      token,
+    });
+    if (!ok) setError(data.error || "Could not rematch");
+    else if (data.state) setRoom(data.state);
   }
 
-  function startMatch() {
-    socket?.emit("room:start", (res: { ok: boolean; error?: string }) => {
-      if (!res.ok) setError(res.error || "Could not start");
+  async function submit(prompt: string) {
+    if (!room) return;
+    setError(null);
+    const { ok, data } = await roomApi({
+      action: "prompt",
+      code: room.code,
+      token,
+      prompt,
     });
-  }
-
-  function rematch() {
-    socket?.emit("room:rematch", (res: { ok: boolean; error?: string }) => {
-      if (!res.ok) setError(res.error || "Could not rematch");
-    });
-  }
-
-  function submit(prompt: string) {
-    socket?.emit("prompt:submit", { prompt }, (res: { ok: boolean; error?: string }) => {
-      if (!res?.ok && res?.error) setError(res.error);
-    });
+    if (!ok) setError(data.error || "Prompt failed");
+    else if (data.state) setRoom(data.state);
   }
 
   const fxAnim: AnimSpec | null = room?.fx.anim ?? null;
-
   const waiting = !room || room.phase === "waiting";
 
   const blockLeft = useMemo(() => {
@@ -115,6 +201,16 @@ export function OnlineShell({ onBack }: Props) {
     };
   }, [room, room?.status1.blockUntil, room?.status2.blockUntil]);
 
+  if (booting) {
+    return (
+      <div className="relative flex h-[100dvh] items-center justify-center arena-floor">
+        <p className="text-sm uppercase tracking-widest text-[var(--mute)]">
+          Opening room…
+        </p>
+      </div>
+    );
+  }
+
   if (waiting) {
     return (
       <div className="relative flex h-[100dvh] flex-col overflow-hidden arena-floor">
@@ -128,40 +224,13 @@ export function OnlineShell({ onBack }: Props) {
             ← Back
           </button>
           <h1 className="font-[family-name:var(--font-display)] text-4xl font-extrabold tracking-tighter uppercase">
-            Online clash
+            {seat === 1 ? "Your room" : "Joined"}
           </h1>
           <p className="mt-3 text-sm text-[var(--ink)]/75">
-            Host a room on this machine. Friend opens the same site (your LAN
-            URL) and joins with the code. Live sync over Socket.io.
+            {seat === 1
+              ? "Share the link with a friend. When they join, start the match."
+              : "Waiting for the host to start the match."}
           </p>
-
-          {!room && (
-            <div className="mt-8 flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={createRoom}
-                className="bg-[var(--ink)] px-5 py-3 font-[family-name:var(--font-display)] font-bold uppercase text-[var(--paper)]"
-              >
-                Host room (Char 1)
-              </button>
-              <div className="flex gap-2">
-                <input
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  placeholder="ROOM CODE"
-                  maxLength={6}
-                  className="flex-1 border-2 border-[var(--ink)]/20 bg-[var(--paper)] px-3 py-2 font-mono uppercase tracking-widest outline-none focus:border-[var(--ink)]/50"
-                />
-                <button
-                  type="button"
-                  onClick={joinRoom}
-                  className="bg-[var(--coral)] px-4 py-2 font-[family-name:var(--font-display)] font-bold uppercase text-white"
-                >
-                  Join
-                </button>
-              </div>
-            </div>
-          )}
 
           {room && (
             <div className="mt-8 border-2 border-[var(--ink)]/15 bg-[var(--paper)]/90 p-4">
@@ -172,15 +241,35 @@ export function OnlineShell({ onBack }: Props) {
                 {room.code}
               </p>
               <p className="mt-3 text-sm text-[var(--ink)]/70">
-                You are <strong>Char {seat}</strong>. Friend visits{" "}
-                <code className="rounded bg-[var(--ink)]/10 px-1">{lanHint}</code>{" "}
-                → Online → Join with this code.
+                You are <strong>Char {seat}</strong>.
               </p>
+              {seat === 1 && shareUrl && (
+                <div className="mt-4 flex flex-col gap-2">
+                  <code className="break-all rounded bg-[var(--ink)]/10 px-2 py-1.5 text-xs">
+                    {shareUrl}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={copyLink}
+                    className="w-fit bg-[var(--ink)] px-4 py-2 text-xs font-bold uppercase text-[var(--paper)]"
+                  >
+                    {copied ? "Copied" : "Copy invite link"}
+                  </button>
+                </div>
+              )}
               <div className="mt-4 flex gap-4 text-xs uppercase tracking-wider">
-                <span className={room.seats[1] ? "text-[var(--teal)]" : "text-[var(--mute)]"}>
+                <span
+                  className={
+                    room.seats[1] ? "text-[var(--teal)]" : "text-[var(--mute)]"
+                  }
+                >
                   Char 1 {room.seats[1] ? "ready" : "…"}
                 </span>
-                <span className={room.seats[2] ? "text-[var(--coral)]" : "text-[var(--mute)]"}>
+                <span
+                  className={
+                    room.seats[2] ? "text-[var(--coral)]" : "text-[var(--mute)]"
+                  }
+                >
                   Char 2 {room.seats[2] ? "ready" : "waiting"}
                 </span>
               </div>
@@ -210,7 +299,20 @@ export function OnlineShell({ onBack }: Props) {
     );
   }
 
-  if (!room || !seat) return null;
+  if (!room || !seat) {
+    return (
+      <div className="relative flex h-[100dvh] flex-col items-center justify-center gap-4 arena-floor px-6">
+        <p className="text-sm text-[var(--coral)]">{error || "Room unavailable"}</p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-xs uppercase tracking-widest text-[var(--mute)]"
+        >
+          ← Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[100dvh] flex-col bg-[var(--dust)]">
