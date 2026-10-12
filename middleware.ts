@@ -6,9 +6,10 @@ const COOKIE = "site_auth";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Pages are password-gated; APIs are called after unlock (and by server routes).
   if (
     pathname.startsWith("/password") ||
-    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico"
   ) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ClashResolveResponse } from "@/lib/clash";
+import { resolveClash } from "@/app/api/clash/route";
 import {
   applyResolve,
   createRoom,
@@ -18,13 +18,6 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-function originOf(req: NextRequest) {
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  const proto = req.headers.get("x-forwarded-proto") || "http";
-  if (host) return `${proto}://${host}`;
-  return `http://127.0.0.1:${process.env.PORT || 3000}`;
-}
 
 export async function GET(req: NextRequest) {
   const code = String(req.nextUrl.searchParams.get("code") || "")
@@ -131,47 +124,24 @@ export async function POST(req: NextRequest) {
 
     try {
       const forged = seat === 1 ? room.agent1.forged : room.agent2.forged;
-      const res = await fetch(`${originOf(req)}/api/clash`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          player: seat,
-          prompt: text,
-          phase: forged ? "battle" : "forge",
-          agent1: room.agent1,
-          agent2: room.agent2,
-          hp1: room.hp1,
-          hp2: room.hp2,
-          status1: room.status1,
-          status2: room.status2,
-          priorPrompts: room.priors,
-          story: room.beats.map((b) => b.text),
-          matchElapsedMs: Date.now() - room.matchStartedAt,
-          promptIndex: room.promptCount,
-          active1: liveActive(room.active1),
-          active2: liveActive(room.active2),
-        }),
+      const data = await resolveClash({
+        player: seat,
+        prompt: text,
+        phase: forged ? "battle" : "forge",
+        agent1: room.agent1,
+        agent2: room.agent2,
+        hp1: room.hp1,
+        hp2: room.hp2,
+        status1: room.status1,
+        status2: room.status2,
+        priorPrompts: room.priors,
+        story: room.beats.map((b) => b.text),
+        matchElapsedMs: Date.now() - room.matchStartedAt,
+        promptIndex: room.promptCount,
+        active1: liveActive(room.active1),
+        active2: liveActive(room.active2),
       });
-      const data = (await res.json()) as ClashResolveResponse & { error?: string };
-      if (!res.ok || data.error) {
-        if (seat === 1) {
-          room.budget1 = Math.min(MAX_CHARS, room.budget1 + text.length);
-          room.active1 = null;
-        } else {
-          room.budget2 = Math.min(MAX_CHARS, room.budget2 + text.length);
-          room.active2 = null;
-        }
-        room.turn += 1;
-        room.beats.push({
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          turn: room.turn,
-          player: "system",
-          text: "Referee glitched. Characters refunded.",
-          at: Date.now(),
-        });
-      } else {
-        applyResolve(room, seat, text, data);
-      }
+      applyResolve(room, seat, text, data);
     } catch (err) {
       console.error("prompt resolve failed", err);
       if (seat === 1) {

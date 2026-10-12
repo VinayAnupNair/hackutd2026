@@ -692,22 +692,17 @@ function mergeAnim(
   return merged;
 }
 
-export async function POST(req: Request) {
-  let body: ClashResolveRequest;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
+/** Resolve a prompt — callable from other server routes (avoids self-fetch + auth). */
+export async function resolveClash(
+  body: ClashResolveRequest
+): Promise<ClashResolveResponse> {
   if (!body?.prompt || typeof body.prompt !== "string") {
-    return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+    throw new Error("Missing prompt");
   }
   if (body.player !== 1 && body.player !== 2) {
-    return NextResponse.json({ error: "Invalid player" }, { status: 400 });
+    throw new Error("Invalid player");
   }
 
-  // Always have a sane local baseline
   body.priorPrompts = Array.isArray(body.priorPrompts) ? body.priorPrompts : [];
   body.status1 = body.status1 || {
     blockUntil: 0,
@@ -727,10 +722,10 @@ export async function POST(req: Request) {
   const localUniq = scoreUniqueness(body.prompt, body.priorPrompts);
 
   if (!process.env.GROQ_API_KEY) {
-    return NextResponse.json(normalize(fallbackResolve(body), body, localUniq));
+    return normalize(fallbackResolve(body), body, localUniq);
   }
 
-  const liveActive = (m: ClashResolveRequest["active1"]) =>
+  const liveActiveMove = (m: ClashResolveRequest["active1"]) =>
     m && m.until > Date.now() - 500 ? m : null;
 
   const userPayload = {
@@ -745,9 +740,9 @@ export async function POST(req: Request) {
     hp2: body.hp2,
     status1: body.status1,
     status2: body.status2,
-    active1: liveActive(body.active1),
-    active2: liveActive(body.active2),
-    opponentCurrently: liveActive(body.player === 1 ? body.active2 : body.active1),
+    active1: liveActiveMove(body.active1),
+    active2: liveActiveMove(body.active2),
+    opponentCurrently: liveActiveMove(body.player === 1 ? body.active2 : body.active1),
     priorPrompts: body.priorPrompts.slice(-16),
     recentStory: body.story.slice(-8),
     matchElapsedMs: body.matchElapsedMs,
@@ -815,14 +810,31 @@ export async function POST(req: Request) {
     const result = await response.json();
     if (!response.ok) {
       console.error("Groq clash error:", result);
-      return NextResponse.json(normalize(fallbackResolve(body), body, localUniq));
+      return normalize(fallbackResolve(body), body, localUniq);
     }
 
     const raw = result?.choices?.[0]?.message?.content || "";
     const parsed = extractJson(raw) || fallbackResolve(body);
-    return NextResponse.json(normalize(parsed, body, localUniq));
+    return normalize(parsed, body, localUniq);
   } catch (err) {
     console.error("Clash resolve failed:", err);
-    return NextResponse.json(normalize(fallbackResolve(body), body, localUniq));
+    return normalize(fallbackResolve(body), body, localUniq);
+  }
+}
+
+export async function POST(req: Request) {
+  let body: ClashResolveRequest;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  try {
+    const result = await resolveClash(body);
+    return NextResponse.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Resolve failed";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
