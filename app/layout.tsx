@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Syne, JetBrains_Mono } from "next/font/google";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 const syne = Syne({
@@ -14,6 +14,12 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-mono",
   weight: ["400", "500", "600", "700"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+};
 
 export const metadata: Metadata = {
   title: "Clash Agents",

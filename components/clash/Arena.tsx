@@ -44,7 +44,7 @@ export function Arena({
   winner,
 }: Props) {
   return (
-    <div className="relative flex h-full min-h-[280px] flex-col overflow-hidden arena-floor">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden arena-floor">
       <div className="noise-overlay absolute inset-0 z-[1]" />
       <ArenaScene
         forged1={agent1.forged}

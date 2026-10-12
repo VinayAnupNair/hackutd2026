@@ -70,13 +70,21 @@ export function PromptPanel({
             send();
           }
         }}
+        onFocus={(e) => {
+          const el = e.currentTarget;
+          window.setTimeout(() => {
+            el.scrollIntoView({ block: "center", behavior: "smooth" });
+          }, 300);
+        }}
         disabled={disabled || busy}
+        enterKeyHint="send"
+        autoCapitalize="sentences"
         placeholder={
           forged
             ? "Attack, defend, fly, spawn a gun, throw bubbles — anything…"
             : "Forge something weird & specific — generics hit soft…"
         }
-        className="mt-2 min-h-[110px] flex-1 resize-none border border-[var(--ink)]/15 bg-[var(--paper)] p-3 text-sm leading-relaxed text-[var(--ink)] outline-none placeholder:text-[var(--mute)]/70 focus:border-[var(--ink)]/40 disabled:opacity-50"
+        className="mt-2 min-h-[110px] flex-1 resize-none border border-[var(--ink)]/15 bg-[var(--paper)] p-3 text-base leading-relaxed text-[var(--ink)] outline-none placeholder:text-[var(--mute)]/70 focus:border-[var(--ink)]/40 disabled:opacity-50 lg:text-sm"
       />
 
       <div className="mt-2 flex items-center justify-between gap-2">

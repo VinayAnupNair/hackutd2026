@@ -2885,15 +2885,24 @@ export function ArenaScene({
     apiRef.current?.setBlocking(blocking1, blocking2);
   }, [blocking1, blocking2]);
 
-  useEffect(() => {
-    if (!actor || !anim || hitKey <= 0) return;
-    apiRef.current?.play(actor, anim, damage);
-  }, [actor, anim, hitKey, damage]);
+  // Play only when a new strike lands. Room polls replace `anim` with a new
+  // object every tick; depending on it restarts the same hit in a loop.
+  const strikeRef = useRef({ actor, anim, damage });
+  strikeRef.current = { actor, anim, damage };
+  const oppStrikeRef = useRef({ oppActor, oppAnim, oppDamage });
+  oppStrikeRef.current = { oppActor, oppAnim, oppDamage };
 
   useEffect(() => {
-    if (!oppActor || !oppAnim || !oppHitKey || oppHitKey <= 0) return;
-    apiRef.current?.play(oppActor, oppAnim, oppDamage);
-  }, [oppActor, oppAnim, oppHitKey, oppDamage]);
+    const { actor: who, anim: spec, damage: dmg } = strikeRef.current;
+    if (!who || !spec || hitKey <= 0) return;
+    apiRef.current?.play(who, spec, dmg);
+  }, [hitKey]);
+
+  useEffect(() => {
+    const { oppActor: who, oppAnim: spec, oppDamage: dmg } = oppStrikeRef.current;
+    if (!who || !spec || !oppHitKey || oppHitKey <= 0) return;
+    apiRef.current?.play(who, spec, dmg);
+  }, [oppHitKey]);
 
   return <div ref={mountRef} className="absolute inset-0" />;
 }

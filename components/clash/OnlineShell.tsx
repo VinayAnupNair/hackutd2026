@@ -345,7 +345,7 @@ export function OnlineShell({ joinCode, onBack }: Props) {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(240px,1fr)_minmax(320px,1.4fr)_minmax(240px,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_auto_minmax(140px,1fr)_auto] overflow-y-auto overscroll-contain lg:grid-cols-[minmax(240px,1fr)_minmax(320px,1.4fr)_minmax(240px,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] lg:overflow-hidden">
         <div className="col-span-full flex gap-4 border-b border-[var(--ink)]/10 bg-[var(--paper)]/90 px-4 py-3 lg:col-span-3">
           <div className="flex-1">
             <HPBar
@@ -373,7 +373,7 @@ export function OnlineShell({ joinCode, onBack }: Props) {
           </div>
         </div>
 
-        <div className="min-h-0 border-b border-[var(--ink)]/10 p-2 lg:order-1 lg:border-b-0 lg:border-r">
+        <div className="relative z-20 min-h-[220px] border-b border-[var(--ink)]/10 p-2 lg:order-1 lg:min-h-0 lg:border-b-0 lg:border-r">
           <PromptPanel
             player={1}
             budget={seat === 1 ? myBudget : room.budget1}
@@ -390,8 +390,8 @@ export function OnlineShell({ joinCode, onBack }: Props) {
           )}
         </div>
 
-        <div className="flex min-h-0 flex-col lg:order-2">
-          <div className="min-h-[240px] flex-1 border-b border-[var(--ink)]/10 lg:min-h-0 lg:flex-[1.15]">
+        <div className="flex min-h-0 flex-col overflow-hidden lg:order-2">
+          <div className="relative min-h-[140px] flex-1 border-b border-[var(--ink)]/10 lg:min-h-0 lg:flex-[1.15]">
             <Arena
               agent1={room.agent1}
               agent2={room.agent2}
@@ -411,12 +411,12 @@ export function OnlineShell({ joinCode, onBack }: Props) {
               winner={room.winner}
             />
           </div>
-          <div className="h-44 shrink-0 lg:h-auto lg:min-h-[180px] lg:flex-1">
+          <div className="h-28 shrink-0 lg:h-auto lg:min-h-[180px] lg:flex-1">
             <Storyboard beats={room.beats} />
           </div>
         </div>
 
-        <div className="min-h-0 border-t border-[var(--ink)]/10 p-2 lg:order-3 lg:border-t-0 lg:border-l">
+        <div className="relative z-20 min-h-[220px] border-t border-[var(--ink)]/10 p-2 lg:order-3 lg:min-h-0 lg:border-t-0 lg:border-l">
           <PromptPanel
             player={2}
             budget={seat === 2 ? myBudget : room.budget2}
