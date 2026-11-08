@@ -1,37 +1,23 @@
+import type { Metadata } from "next";
+import { SiteHeader } from "@/components/bank/SiteHeader";
 import "./globals.css";
-import { Syne, JetBrains_Mono } from "next/font/google";
-import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
-
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["500", "600", "700", "800"],
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500", "600", "700"],
-});
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  interactiveWidget: "resizes-content",
-};
 
 export const metadata: Metadata = {
-  title: "Clash Agents",
-  description:
-    "Two prompt-forged agents. One ring. Unique creative prompts hit harder — speed is rewarded.",
+  title: "PNC | Virtual Wallet",
+  description: "Your accounts, balances, and recent activity in one place.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${syne.variable} ${jetbrains.variable}`}>
-      <body className="font-[family-name:var(--font-mono)] antialiased">
-        {children}
+    <html lang="en">
+      <body>
+        <a className="skip-link" href="#main-content">Skip to content</a>
+        <SiteHeader />
+        <main id="main-content" className="app-main">{children}</main>
+        <footer className="app-footer">
+          <span>PNC Virtual Wallet</span>
+          <span>Sample balances · Preview</span>
+        </footer>
       </body>
     </html>
   );

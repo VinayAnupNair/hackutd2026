@@ -3,118 +3,206 @@
 @tailwind utilities;
 
 :root {
-  --ink: #1a1814;
-  --paper: #e8e2d6;
-  --dust: #cfc6b4;
-  --ring: #f2ebe0;
-  --teal: #0d9b8a;
-  --teal-hot: #14c4ae;
-  --coral: #e85d3a;
-  --coral-hot: #ff6f45;
-  --brass: #b8924a;
-  --mute: #6e675c;
-  --flash: #ffe566;
+  --pnc-blue: #075a9c;
+  --pnc-orange: #ed7000;
+  --pnc-ink: #222b34;
+  --background: 210 14% 97%;
+  --foreground: 210 21% 17%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 21% 17%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 21% 17%;
+  --primary: 207 91% 32%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 15% 96%;
+  --secondary-foreground: 210 21% 17%;
+  --muted: 210 15% 96%;
+  --muted-foreground: 213 7% 42%;
+  --accent: 210 30% 95%;
+  --accent-foreground: 207 91% 32%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 13% 87%;
+  --input: 210 13% 80%;
+  --ring: 207 91% 32%;
+  --radius: .5rem;
 }
 
-html,
-body {
-  height: 100%;
-}
+* { box-sizing: border-box; border-color: hsl(var(--border)); }
+html { scroll-padding-top: 24px; }
+body { margin: 0; background: #f5f6f7; color: var(--pnc-ink); font-family: Arial, Helvetica, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; }
+button, a, summary, select { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+a { text-decoration: none; }
+button, a, input, select, summary { outline-offset: 4px; }
+:focus-visible { outline: 2px solid #3079b3; }
+::selection { background: #d5e7f6; }
+h1, h2, p { margin: 0; }
+h2 { font-size: 17px; font-weight: 600; }
+.skip-link { position: fixed; top: -60px; left: 20px; z-index: 100; padding: 12px 20px; background: white; color: var(--pnc-blue); }
+.skip-link:focus { top: 12px; }
+.site-header { background: var(--pnc-blue); color: white; }
+.header-top, .header-nav, .app-main, .app-footer { width: min(1120px, calc(100% - 64px)); margin-inline: auto; }
+.header-top { height: 80px; display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 10px; color: white; }
+.brand > span:first-of-type { font-family: Georgia, serif; font-size: 30px; letter-spacing: -.8px; }
+.brand-divider { width: 1px; height: 25px; background: #ffffff50; margin: 0 8px 0 12px; }
+.brand-product { font-size: 17px; font-weight: 400; }
+.header-tools { display: flex; align-items: center; gap: 26px; }
+.header-icon { display: grid; place-items: center; width: 36px; height: 40px; border-radius: 4px; color: white; }
+.header-icon:hover, .profile-button:hover { background: #ffffff12; }
+.profile-button { display: flex; align-items: center; gap: 10px; padding: 3px; color: white; border-radius: 4px; }
+.avatar { display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid #ffffff65; border-radius: 50%; font-size: 11px; }
+.profile-name { font-size: 13px; }
+.header-nav { display: flex; align-items: stretch; gap: 34px; height: 49px; border-top: 1px solid #ffffff26; }
+.header-nav a { display: flex; align-items: center; color: #e2edf6; border-bottom: 3px solid transparent; padding: 0 1px; font-size: 14px; }
+.header-nav a[aria-current] { color: white; border-bottom-color: #f58220; font-weight: 600; }
+.header-nav a:hover { color: white; }
+.bank-popover { padding: 20px; border-radius: 6px; box-shadow: 0 4px 16px #182d4214; }
+.bank-popover h2 { font-size: 15px; }
+.bank-popover p { margin: 10px 0; color: #656d74; font-size: 13px; }
+.welcome-band { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 28px 0 52px; min-height: 139px; color: white; isolation: isolate; }
+.welcome-band::before { content: ""; position: absolute; background: var(--pnc-blue); left: calc((1120px - 100vw) / 2); right: calc((1120px - 100vw) / 2); inset-block: 0; z-index: -1; }
+.welcome-band h1 { font-size: 27px; font-weight: 500; letter-spacing: -.4px; }
+.welcome-band p { margin-top: 8px; font-size: 13px; color: #d5e7f5; }
+.welcome-label { font-size: 12px; color: #d5e7f5; }
+.dashboard-layout { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 354px; gap: 26px; margin-top: -24px; padding-bottom: 40px; }
+.primary-column, .secondary-column { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.bank-panel { background: white; border: 1px solid #e0e3e6; border-radius: 9px; overflow: hidden; box-shadow: 0 1px 2px #182d4208; }
+.panel-title { display: flex; justify-content: space-between; align-items: center; background: #f0f1f3; padding: 16px 24px; }
+.panel-title h2 { font-size: 15px; }
+.panel-title > span { color: #6b7177; font-size: 12px; }
+summary { list-style: none; cursor: pointer; }
+summary::-webkit-details-marker { display: none; }
+.wallet-account { margin: 0 24px; border-bottom: 1px solid #e7e9eb; }
+.wallet-account summary { display: flex; gap: 18px; align-items: center; padding: 23px 0; }
+.wallet-account summary:hover .account-label > span:first-child { text-decoration: underline; }
+.account-label { display: flex; flex-direction: column; gap: 8px; color: #075a9c; font-size: 16px; }
+.account-mask { font-weight: 400; font-size: 13px; margin-left: 3px; }
+.account-meta { display: block; color: #6a7076; font-size: 11px; font-weight: 400; line-height: 1.45; }
+.wallet-balance { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-left: auto; font-variant-numeric: tabular-nums; }
+.wallet-balance > span:first-child { color: #1c2227; font-size: 23px; letter-spacing: -.5px; }
+.detail-chevron { color: #5d6973; flex-shrink: 0; }
+details[open] > summary .detail-chevron { transform: rotate(180deg); }
+.account-detail { display: flex; align-items: end; gap: 24px; padding: 0 0 22px; font-size: 12px; }
+.account-detail > div { display: flex; flex-direction: column; gap: 6px; }
+.account-detail > a { margin-left: auto; }
+.wallet-total { display: flex; align-items: center; justify-content: space-between; padding: 19px 24px; font-size: 12px; color: #626b73; }
+.wallet-total strong { font-size: 15px; font-weight: 600; color: #303941; font-variant-numeric: tabular-nums; padding-right: 36px; }
+.text-link { color: var(--pnc-blue); font-size: 12px; }
+.text-link:hover { text-decoration: underline; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 23px 24px 17px; }
+.linked-panel .section-heading { padding: 21px 20px 12px; }
+.linked-panel h2 { font-size: 15px; }
+.external-account { margin-inline: 20px; border-bottom: 1px solid #edf0f2; }
+.external-account summary { display: flex; align-items: center; gap: 9px; padding: 16px 0; }
+.external-account summary > div:first-child { flex: 1; min-width: 0; }
+.account-bank { display: block; font-size: 13px; margin-bottom: 6px; }
+.external-account .account-meta { font-size: 10px; }
+.external-balance { text-align: right; flex-shrink: 0; }
+.external-balance > span:first-child { display: block; margin-bottom: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.external-detail { padding-bottom: 16px; font-size: 11px; display: flex; justify-content: space-between; gap: 10px; }
+.panel-action { display: flex; gap: 9px; align-items: center; padding: 18px 20px; color: var(--pnc-blue); font-size: 12px; }
+.panel-action > svg:last-child { margin-left: auto; }
+.panel-action:hover { background: #f8fafc; }
+.balance-panel { padding: 22px 20px 13px; }
+.balance-panel h2 { font-size: 15px; }
+.net-worth-value { font-size: 28px; letter-spacing: -.6px; margin-top: 19px; font-variant-numeric: tabular-nums; }
+.balance-change { color: #27734f; font-size: 11px; margin-top: 8px; }
+.balance-change span { color: #6a7076; margin-left: 4px; }
+.balance-chart { height: 118px; margin-top: 7px; }
+.activity-link { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--pnc-blue); padding: 0 4px; }
+.activity-link svg:last-child { margin-left: auto; }
+.activity-link:hover span { text-decoration: underline; }
+.activity-filter { position: relative; display: flex; align-items: center; color: #68717a; }
+.activity-filter select { appearance: none; padding: 8px 23px 8px 4px; background: transparent; font-size: 11px; color: #59636c; cursor: pointer; border-radius: 2px; }
+.activity-filter svg { pointer-events: none; position: absolute; right: 2px; }
+.transaction-list { list-style: none; margin: 0; padding: 0 24px; }
+.transaction-list li { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 0; border-bottom: 1px solid #edf0f2; }
+.transaction-list li:last-child { border-bottom: 0; }
+.transaction-info { min-width: 0; }
+.transaction-merchant { display: block; font-size: 13px; margin-bottom: 6px; line-height: 1.4; }
+.transaction-amount { flex-shrink: 0; text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+.transaction-amount > span:first-child { display: block; margin-bottom: 6px; }
+.deposit-amount { color: #26734f; }
+.view-all-button { width: 100%; padding: 17px 24px; border-top: 1px solid #e7e9eb; color: var(--pnc-blue); font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.view-all-button:hover { background: #f8fafc; }
+.app-footer { display: flex; justify-content: space-between; gap: 16px; padding: 21px 0 26px; border-top: 1px solid #dfe3e6; font-size: 11px; color: #747b82; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; color: #d5e7f5; font-size: 12px; margin-bottom: 15px; }
+.connect-welcome { padding-top: 22px; }
+.connect-panel { position: relative; max-width: 780px; margin: -24px auto 48px; padding: 28px; }
+.connect-intro h2 { font-size: 20px; }
+.connect-intro p { font-size: 13px; color: #68717a; margin-top: 8px; }
+.bank-search { display: flex; align-items: center; gap: 12px; border: 1px solid #bfc8d0; border-radius: 5px; padding: 13px 14px; margin: 24px 0 12px; color: #657482; }
+.bank-search:focus-within { outline: 2px solid #3079b3; outline-offset: 2px; }
+.bank-search input { background: transparent; width: 100%; outline: none; color: #222b34; font-size: 13px; }
+.bank-directory-row { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; padding: 17px 5px; border-bottom: 1px solid #e9ecef; }
+.bank-directory-row:hover { background: #f7fafc; }
+.bank-directory-row:last-child { border: 0; }
+.bank-initials { display: grid; place-items: center; width: 37px; height: 37px; border: 1px solid #e7ebee; border-radius: 4px; font-size: 11px; font-weight: 700; background: #fbfcfd; }
+.bank-directory-name { flex: 1; font-size: 14px; }
+.bank-directory-row > svg { color: #6b7884; }
+.linked-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #307053; }
+.connection-notice { display: flex; align-items: center; gap: 8px; color: #307053; font-size: 12px; padding: 12px 0; }
+.bank-dialog { border-radius: 8px; max-width: 400px; }
+.bank-dialog h2 { font-size: 20px; }
+.bank-dialog p { line-height: 1.6; padding-top: 7px; }
+.bank-button { background: var(--pnc-blue); color: white; padding: 12px 18px; border-radius: 4px; margin-top: 8px; }
+.bank-button:hover { background: #064c84; }
+.empty-state { padding: 32px 0; text-align: center; font-size: 13px; color: #68717a; }
 
-body {
-  background: var(--paper);
-  color: var(--ink);
-  overflow: hidden;
+@media (max-width: 1184px) {
+  .welcome-band::before { left: -32px; right: -32px; }
 }
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@media (max-width: 960px) {
+  .dashboard-layout { grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
+  .wallet-account { margin-inline: 20px; }
+  .wallet-balance > span:first-child { font-size: 21px; }
+  .external-account .account-meta { max-width: 125px; }
+  .external-balance .account-meta { max-width: 90px; }
 }
-
-@keyframes pulse-ring {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(184, 146, 74, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 0 14px rgba(184, 146, 74, 0);
-  }
+@media (max-width: 760px) {
+  .header-top, .header-nav, .app-main, .app-footer { width: calc(100% - 36px); }
+  .header-top { height: 69px; }
+  .brand svg { width: 29px; height: 29px; }
+  .brand > span:first-of-type { font-size: 27px; }
+  .brand { gap: 8px; }
+  .brand-divider { height: 21px; margin: 0 4px; }
+  .brand-product { font-size: 13px; }
+  .header-tools { gap: 10px; }
+  .profile-name, .profile-button > svg { display: none; }
+  .header-nav { height: 46px; gap: 28px; }
+  .header-nav a { font-size: 13px; }
+  .welcome-band { padding: 25px 2px 50px; min-height: 130px; }
+  .welcome-band::before { left: -18px; right: -18px; }
+  .welcome-band h1 { font-size: 24px; }
+  .welcome-band p { font-size: 12px; }
+  .welcome-label { display: none; }
+  .dashboard-layout { grid-template-columns: 1fr; gap: 22px; }
+  .primary-column, .secondary-column { gap: 22px; }
+  .panel-title { padding: 15px 18px; }
+  .wallet-account { margin-inline: 18px; }
+  .wallet-account summary { padding: 22px 0; gap: 13px; }
+  .account-label { font-size: 15px; }
+  .wallet-balance > span:first-child { font-size: 22px; }
+  .wallet-total { padding: 18px; }
+  .wallet-total strong { padding-right: 31px; }
+  .section-heading { padding: 20px 18px 13px; }
+  .section-heading h2 { font-size: 16px; }
+  .transaction-list { padding-inline: 18px; }
+  .transaction-list li { padding-block: 17px; gap: 10px; }
+  .transaction-merchant { font-size: 12px; }
+  .transaction-amount { font-size: 12px; }
+  .account-detail { gap: 14px; flex-wrap: wrap; }
+  .account-detail > a { margin-left: 0; }
+  .external-account .account-meta { max-width: none; }
+  .external-balance .account-meta { max-width: none; }
+  .balance-chart { height: 130px; }
+  .connect-panel { padding: 22px 18px; }
+  .connect-welcome { padding-top: 20px; }
+  .app-footer { font-size: 10px; }
 }
-
-@keyframes float-y {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes hit-shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-6px);
-  }
-  75% {
-    transform: translateX(6px);
-  }
-}
-
-@keyframes story-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.arena-pulse {
-  animation: pulse-ring 2.4s ease-in-out infinite;
-}
-
-.agent-float {
-  animation: float-y 3.2s ease-in-out infinite;
-}
-
-.hit-shake {
-  animation: hit-shake 0.35s ease-in-out;
-}
-
-.story-in {
-  animation: story-in 0.4s ease-out both;
-}
-
-.arena-floor {
-  background:
-    radial-gradient(ellipse 70% 55% at 50% 48%, rgba(242, 235, 224, 0.95), transparent 70%),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 47px,
-      rgba(26, 24, 20, 0.03) 47px,
-      rgba(26, 24, 20, 0.03) 48px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 47px,
-      rgba(26, 24, 20, 0.03) 47px,
-      rgba(26, 24, 20, 0.03) 48px
-    ),
-    linear-gradient(165deg, #ddd5c5 0%, #c8beac 45%, #b8ae9a 100%);
-}
-
-.noise-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
-  opacity: 0.07;
-  pointer-events: none;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
