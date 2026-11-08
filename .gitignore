@@ -28,3 +28,5 @@ next-env.d.ts
 
 # local pdf extraction venv
 .venv-pdf/
+
+# Dated: 2026-11-07

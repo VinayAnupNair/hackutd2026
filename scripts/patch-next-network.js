@@ -126,3 +126,5 @@ for (const rel of targets) {
   fs.writeFileSync(file, isEsm ? PATCHED_ESM : PATCHED);
   console.log(`patched ${rel}`);
 }
+
+# Dated: 2026-11-07
